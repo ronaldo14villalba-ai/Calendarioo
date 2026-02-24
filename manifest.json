@@ -1,0 +1,9 @@
+{
+  "name": "Días Dai y Roni Cloud",
+  "short_name": "Dai&Roni",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": []
+}

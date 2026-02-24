@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Días que se vieron Dai y Roni</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ffffff">
+  <style>
+    body { font-family: Arial; text-align:center; transition:0.3s; }
+    .grid { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; max-width:500px; margin:auto;}
+    .day { padding:10px; border:1px solid #ccc; cursor:pointer; }
+    .checked { background:#ff6b6b; color:white; }
+  </style>
+</head>
+<body>
+  <h1>Días que se vieron Dai y Roni</h1>
+  <p id="stats"></p>
+  <div class="grid" id="calendar"></div>
+  <p id="message"></p>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ⚠️ REEMPLAZAR con tu configuración de Firebase
+const firebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_AUTH_DOMAIN",
+  projectId: "TU_PROJECT_ID",
+  storageBucket: "TU_STORAGE_BUCKET",
+  messagingSenderId: "TU_SENDER_ID",
+  appId: "TU_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const calendar = document.getElementById("calendar");
+const stats = document.getElementById("stats");
+const message = document.getElementById("message");
+
+let year = new Date().getFullYear();
+let totalDays = 365;
+let checkedDays = new Set();
+
+async function loadData(){
+  const docRef = doc(db, "calendarios", "dai_roni_" + year);
+  const docSnap = await getDoc(docRef);
+  if(docSnap.exists()){
+    checkedDays = new Set(docSnap.data().days);
+  }
+  renderCalendar();
+}
+
+async function saveData(){
+  const docRef = doc(db, "calendarios", "dai_roni_" + year);
+  await setDoc(docRef, { days: Array.from(checkedDays) });
+}
+
+function renderCalendar(){
+  calendar.innerHTML="";
+  for(let i=1;i<=totalDays;i++){
+    let div=document.createElement("div");
+    div.className="day";
+    div.innerText=i;
+    if(checkedDays.has(i)) div.classList.add("checked");
+
+    div.onclick=()=>{
+      if(checkedDays.has(i)){
+        checkedDays.delete(i);
+        div.classList.remove("checked");
+      } else {
+        checkedDays.add(i);
+        div.classList.add("checked");
+      }
+      updateStats();
+      saveData();
+    };
+    calendar.appendChild(div);
+  }
+  updateStats();
+}
+
+function updateStats(){
+  let sufridos=checkedDays.size;
+  let felices=totalDays-sufridos;
+  stats.innerText="Días sufridos: "+sufridos+" | Días felices: "+felices;
+
+  let porcentaje=(sufridos/totalDays)*100;
+  if(porcentaje<25){
+    document.body.style.background="#d4edda";
+    message.innerText="La paz reina este año 😌";
+  } else if(porcentaje<50){
+    document.body.style.background="#fff3cd";
+    message.innerText="Relación inestable detectada 😬";
+  } else {
+    document.body.style.background="#f8d7da";
+    message.innerText="Nivel de sufrimiento crítico 💀";
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
